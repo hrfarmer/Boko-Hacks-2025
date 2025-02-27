@@ -15,7 +15,7 @@ from routes.news import news_bp  # Import the new news blueprint
 from models.user import User
 from models.note import Note
 from models.admin import Admin
-from models.file import File  
+from models.file import File
 from sqlalchemy import inspect
 import os
 
@@ -25,7 +25,7 @@ app.secret_key = "supersecretkey"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///boko_hacks.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db.init_app(app)
@@ -42,26 +42,27 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(files_bp)
 app.register_blueprint(captcha_bp)
 app.register_blueprint(news_bp)
-app.register_blueprint(retirement_bp)  
+app.register_blueprint(retirement_bp)
+
 
 def setup_database():
     """Setup database and print debug info"""
     with app.app_context():
         inspector = inspect(db.engine)
         existing_tables = inspector.get_table_names()
-        
+
         if not existing_tables:
             print("No existing tables found. Creating new tables...")
             db.create_all()
-            
+
             init_admin_db()
         else:
             print("Existing tables found:", existing_tables)
-            
+
             db.create_all()
             print("Updated schema with any new tables")
-        
-        for table in ['users', 'notes', 'admin_credentials', 'files']:
+
+        for table in ["users", "notes", "admin_credentials", "files"]:
             if table in inspector.get_table_names():
                 print(f"\n{table.capitalize()} table columns:")
                 for column in inspector.get_columns(table):
@@ -69,6 +70,8 @@ def setup_database():
             else:
                 print(f"\n{table} table does not exist!")
 
+
 if __name__ == "__main__":
-    setup_database()  
-    app.run(debug=True)
+    setup_database()
+    app.run(debug=False)
+
