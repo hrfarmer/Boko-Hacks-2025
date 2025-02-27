@@ -4,6 +4,7 @@ from functools import wraps
 from models.user import User
 from models.admin import Admin
 from extensions import db
+from sqlalchemy import text
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -91,8 +92,8 @@ def admin():
                 })
         
         try:
-            query = f"SELECT * FROM users WHERE username = '{username}' AND password_hash = '{password}'"
-            result = db.session.execute(query)
+            query = text("SELECT * FROM users WHERE username = :username AND password_hash = :password")
+            result = db.session.execute(query, {'username': username, 'password': password})
             user_data = result.fetchone()
             
             if user_data:
