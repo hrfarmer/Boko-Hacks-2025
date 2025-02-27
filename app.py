@@ -1,21 +1,56 @@
 import os
+from datetime import timedelta
 
 import dotenv
 from flask import Flask, request, send_from_directory
+from flask_cors import CORS
+from flask_login import LoginManager
 from sqlalchemy import inspect
 
 from extensions import db
-from models.admin import Admin
-from models.file import File
-from models.note import Note
 from models.user import User
 from routes.about import about_bp
 from routes.admin import admin_bp, init_admin_db
+from routes.login import login_bp
 
 dotenv.load_dotenv()
 app = Flask(__name__, template_folder="frontend/dist", static_folder="frontend/dist")
 
-app.secret_key = os.getenv('SECRET_KEY')
+# Configure Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.session_protection = "strong"
+
+@login_manager.user_loader
+def load_user(user_id):
+    try:
+        return User.query.get(int(user_id))
+    except:
+        return None
+
+# Configure CORS
+CORS(app, 
+     resources={r"/api/*": {"origins": "http://localhost:5173"}},  # Vite's default port
+     supports_credentials=True,
+     allow_headers=["Content-Type"],
+     expose_headers=["Access-Control-Allow-Origin"],
+     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+
+app.secret_key = os.getenv("SECRET_KEY")
+if not app.secret_key:
+    raise ValueError("No SECRET_KEY set in environment")
+
+# Configure session
+app.config.update(
+    SESSION_COOKIE_SECURE=False,  # Set to True in production with HTTPS
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),  # Extend session lifetime
+    REMEMBER_COOKIE_DURATION=timedelta(days=7),    # Set remember me duration
+    REMEMBER_COOKIE_SECURE=False,                  # Set to True in production
+    REMEMBER_COOKIE_HTTPONLY=True,
+    SESSION_PROTECTION='strong'
+)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///boko_hacks.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -25,14 +60,24 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db.init_app(app)
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+# Register blueprints with /api prefix
+app.register_blueprint(login_bp)  # login_bp already has /api prefix
+app.register_blueprint(admin_bp, url_prefix="/api")
+app.register_blueprint(about_bp, url_prefix="/api")
+
+
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
 def serve(path):
+    if path.startswith("api/"):
+        return {"error": "Not found"}, 404
+
     static_file_path = os.path.join(app.static_folder, path)
     if path and os.path.exists(static_file_path) and os.path.isfile(static_file_path):
         return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(app.static_folder, "index.html")
+
 
 def setup_database():
     """Setup database and print debug info"""
@@ -58,6 +103,7 @@ def setup_database():
                     print(f"- {column['name']}: {column['type']}")
             else:
                 print(f"\n{table} table does not exist!")
+
 
 if __name__ == "__main__":
     setup_database()
