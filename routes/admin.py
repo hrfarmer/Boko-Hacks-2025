@@ -5,12 +5,22 @@ from models.user import User
 from models.admin import Admin
 from extensions import db
 from sqlalchemy import text
+import dotenv
+import os
+
+dotenv.load_dotenv()
+
+
+admin_username = os.getenv('ADMIN_USERNAME')
+admin_password= os.getenv('ADMIN_PASSWORD')
+
 
 admin_bp = Blueprint("admin", __name__)
 
+
 DEFAULT_ADMIN = {
-    "username": "admin",
-    "password": "password"
+    "username": admin_username,
+    "password": admin_password
 }
 
 def init_admin_db():
