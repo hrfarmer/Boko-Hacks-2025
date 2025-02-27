@@ -90,13 +90,14 @@ def search_notes():
     print(f"Search query: {query}")
     
     try:
-        sql = f"SELECT * FROM notes WHERE title LIKE '%{query}%' OR content LIKE '%{query}%'"
+        sql = text("SELECT * FROM notes WHERE title LIKE :query OR content LIKE :query")
+        params = {"query": f"%{query}%"}
         
         # Log the raw SQL for debugging
         print(f"Executing SQL: {sql}")
         
         # Execute the raw SQL
-        result = db.session.execute(text(sql))
+        result = db.session.execute(sql, params)
         
         notes = []
         for row in result:
