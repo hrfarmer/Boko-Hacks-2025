@@ -17,10 +17,12 @@ from models.note import Note
 from models.admin import Admin
 from models.file import File
 from sqlalchemy import inspect
+import dotenv
 import os
-
+dotenv.load_dotenv()
 app = Flask(__name__)
-app.secret_key = "supersecretkey"
+
+app.secret_key = os.getenv('SECRET_KEY')
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///boko_hacks.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
