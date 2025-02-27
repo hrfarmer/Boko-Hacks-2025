@@ -1,26 +1,19 @@
-from flask import Flask
+import os
+
+import dotenv
+from flask import Flask, request, send_from_directory
+from sqlalchemy import inspect
+
 from extensions import db
-from routes.home import home_bp
-from routes.hub import hub_bp
-from routes.login import login_bp
-from routes.register import register_bp
-from routes.about import about_bp
-from routes.apps import apps_bp
-from routes.notes import notes_bp
-from routes.admin import admin_bp, init_admin_db
-from routes.files import files_bp
-from routes.captcha import captcha_bp
-from routes.retirement import retirement_bp
-from routes.news import news_bp  # Import the new news blueprint
-from models.user import User
-from models.note import Note
 from models.admin import Admin
 from models.file import File
-from sqlalchemy import inspect
-import dotenv
-import os
+from models.note import Note
+from models.user import User
+from routes.about import about_bp
+from routes.admin import admin_bp, init_admin_db
+
 dotenv.load_dotenv()
-app = Flask(__name__)
+app = Flask(__name__, template_folder="frontend/dist", static_folder="frontend/dist")
 
 app.secret_key = os.getenv('SECRET_KEY')
 
@@ -32,20 +25,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db.init_app(app)
 
-# Register Blueprints
-app.register_blueprint(home_bp)
-app.register_blueprint(hub_bp)
-app.register_blueprint(login_bp)
-app.register_blueprint(register_bp)
-app.register_blueprint(about_bp)
-app.register_blueprint(apps_bp)
-app.register_blueprint(notes_bp)
-app.register_blueprint(admin_bp)
-app.register_blueprint(files_bp)
-app.register_blueprint(captcha_bp)
-app.register_blueprint(news_bp)
-app.register_blueprint(retirement_bp)
-
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    static_file_path = os.path.join(app.static_folder, path)
+    if path and os.path.exists(static_file_path) and os.path.isfile(static_file_path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 def setup_database():
     """Setup database and print debug info"""
@@ -72,8 +59,6 @@ def setup_database():
             else:
                 print(f"\n{table} table does not exist!")
 
-
 if __name__ == "__main__":
     setup_database()
     app.run(debug=False)
-
