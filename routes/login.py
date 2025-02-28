@@ -1,29 +1,57 @@
-from flask import Blueprint, render_template, request, flash, redirect, session, url_for
-from models.user import User
-from extensions import db
-import duo_universal
 import os
-import dotenv
 
+import duo_universal
+from dotenv import load_dotenv
+from flask import (Blueprint, flash, jsonify, redirect, render_template,
+                   request, session, url_for)
+from flask_login import current_user, login_required, login_user, logout_user
 
-dotenv.load_dotenv()
+from extensions import db
+from models.user import User
 
+load_dotenv()
 
-login_bp = Blueprint("login", __name__)
+login_bp = Blueprint("login", __name__, url_prefix="/api")
 
-
+# Initialize Duo client
 try:
     client_id = os.getenv('CLIENT_ID')
-    client_secret=os.getenv('CLIENT_SECRET')
-    api_hostname=os.getenv('API_HOSTNAME')
-    redirect_uri = "http://localhost:5000/duo-callback"
-                
-                
-    duo_client = duo_universal.Client(client_id, client_secret, api_hostname, redirect_uri)
-except Exception:
-    pass
+    client_secret = os.getenv('CLIENT_SECRET')
+    api_hostname = os.getenv('API_HOSTNAME')
+    redirect_uri = "http://localhost:5000/api/duo-callback"
+    
+    duo_client = duo_universal.Client(
+        client_id=client_id,
+        client_secret=client_secret,
+        host=api_hostname,
+        redirect_uri=redirect_uri
+    )
+except Exception as e:
+    print(f"Error initializing Duo client: {e}")
+    duo_client = None
 
 
+@login_bp.route("/auth/status")
+def auth_status():
+    try:
+        print(f"Checking auth status. Is authenticated: {current_user.is_authenticated}")
+        is_authenticated = current_user.is_authenticated
+        if is_authenticated:
+            return jsonify({
+                "status": "success",
+                "authenticated": True,
+                "user": {
+                    "username": current_user.username,
+                    "id": current_user.id
+                }
+            })
+    except Exception as e:
+        print(f"Error in auth_status: {e}")
+
+    return jsonify({
+        "status": "success",
+        "authenticated": False
+    })
 
 @login_bp.route("/login", methods=["GET", "POST"])
 def login():
@@ -31,62 +59,95 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        user = User.query.filter_by(username=username).first()
-        if user and user.check_password(password):
-            
-            state = duo_client.generate_state()
-            session['state'] = state
-            session['user'] = user.username
-            prompt_uri = duo_client.create_auth_url(username, state)
+        if not username or not password:
+            return jsonify({"status": "error", "message": "Missing credentials"}), 400
 
-    # Redirect to prompt URI which will redirect to the client's redirect URI
-    # after 2FA
-            print("before")
-            return redirect(prompt_uri)
-            print("after")
-            flash("Login successful!", "success")
-            return redirect(url_for("hub.hub"))
-        else:
-            flash("Invalid username or password.", "error")
-        
-    
-    print("dfdfsdfsfdsfd")
-    return render_template("login.html")
+        try:
+            user = User.query.filter_by(username=username).first()
+            if user and user.check_password(password):
+                # Store user info in session for Duo callback
+                state = duo_client.generate_state()
+                session['state'] = state
+                session['user_id'] = user.id
+                
+                # Generate Duo authentication URL
+                prompt_uri = duo_client.create_auth_url(username, state)
+                
+                return jsonify({
+                    "status": "success",
+                    "duo_url": prompt_uri
+                })
+            else:
+                return jsonify({"status": "error", "message": "Invalid credentials"}), 401
+        except Exception as e:
+            print(f"Error in login: {e}")
+            return jsonify({"status": "error", "message": "Server error"}), 500
+
+    return jsonify({"status": "error", "message": "Method not allowed"}), 405
 
 @login_bp.route("/logout")
+@login_required
 def logout():
-    session.pop("user", None)
-    session.pop('_flashes',None)
-    flash("You have been logged out.", "info")
-    return redirect(url_for("login.login"))
-
+    try:
+        # Get the session ID before logout for debugging
+        session_id = session.get('_id')
+        print(f"Logging out user. Session ID: {session_id}")
+        
+        # Perform logout
+        logout_user()
+        
+        # Clear all session data
+        session.clear()
+        
+        # Force session modifications to be saved
+        session.modified = True
+        
+        print(f"Logout complete. Is authenticated: {current_user.is_authenticated}")
+        return jsonify({"status": "success", "message": "Logged out successfully"})
+    except Exception as e:
+        print(f"Error in logout: {e}")
+        return jsonify({"status": "error", "message": "Logout failed"}), 500
 
 @login_bp.route("/duo-callback")
 def duo_callback():
-    # Get state to verify consistency and originality
-    state = request.args.get('state')
+    try:
+        # Get state and code from Duo response
+        state = request.args.get('state')
+        code = request.args.get('duo_code')
 
-    # Get authorization token to trade for 2FA
-    code = request.args.get('duo_code')
+        if not all([state, code, 'state' in session, 'user_id' in session]):
+            return jsonify({"status": "error", "message": "Invalid session"}), 400
 
-    if 'state' in session and 'user' in session:
-        print('here')
-        saved_state = session['state']
-        username = session['user']
-        
-    else:
-        print('down here')
-        # For flask, if url used to get to login.html is not localhost,
-        # (ex: 127.0.0.1) then the sessions will be different
-        # and the localhost session does not have the state
-        return render_template("login.html")
-                              
-        
-    if state != saved_state:
-        return render_template("login.html")
+        # Verify state matches
+        if state != session['state']:
+            return jsonify({"status": "error", "message": "Invalid state"}), 400
 
-    decoded_token = duo_client.exchange_authorization_code_for_2fa_result(code, username)
-    print("ddajfj")
-    return redirect(url_for("hub.hub"))
-    # Exchange happened successfully so render success page
-    return render_template("hub.html")
+        # Get user from session
+        user = User.query.get(session['user_id'])
+        if not user:
+            return jsonify({"status": "error", "message": "User not found"}), 404
+
+        # Verify Duo authentication
+        decoded_token = duo_client.exchange_authorization_code_for_2fa_result(
+            code,
+            user.username
+        )
+
+        if decoded_token:
+            # Complete login process
+            login_user(user, remember=True)
+            session.permanent = True
+            session.modified = True
+
+            # Clean up session
+            session.pop('state', None)
+            session.pop('user_id', None)
+
+            return redirect("/")
+
+        else:
+            return jsonify({"status": "error", "message": "Duo authentication failed"}), 401
+
+    except Exception as e:
+        print(f"Error in duo callback: {e}")
+        return jsonify({"status": "error", "message": "Server error"}), 500
