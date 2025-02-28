@@ -61,6 +61,19 @@ export default function LoginPage() {
             Login
           </button>
         </form>
+        <p className="mt-4 text-gray-600">
+          Don't have an account?{" "}
+          <a
+            href="/register"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/register");
+            }}
+            className="text-[#501214] hover:underline"
+          >
+            Register here
+          </a>
+        </p>
       </div>
     </div>
   );

@@ -22,14 +22,14 @@ export default function Navbar() {
     <div className="h-screen w-screen flex flex-col">
       <div className="h-24 bg-[#501214] w-full flex p-5 items-center justify-between text-white">
         <div className="flex items-center gap-8">
-          <p className="font-bold text-2xl">placeholder</p>
+          <p className="font-bold text-2xl">BokoHacks</p>
           <nav className="flex gap-4">
             {PAGES.map((page) => (
               <NavLink
                 key={page.href}
                 to={page.href}
                 className={({ isActive }) =>
-                  `hover:text-gray-200 transition-colors ${
+                  `hover:text-gray-200 text-white transition-colors ${
                     isActive ? "font-bold" : ""
                   }`
                 }

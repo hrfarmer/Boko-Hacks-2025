@@ -11,10 +11,12 @@ from extensions import db
 from models.user import User
 from routes.about import about_bp
 from routes.admin import admin_bp, init_admin_db
+from routes.captcha import captcha_bp
 from routes.files import files_bp
 from routes.login import login_bp
 from routes.news import news_bp
 from routes.notes import notes_bp
+from routes.register import register_bp
 
 dotenv.load_dotenv()
 app = Flask(__name__, template_folder="frontend/dist", static_folder="frontend/dist")
@@ -66,6 +68,8 @@ db.init_app(app)
 
 # Register blueprints with /api prefix
 app.register_blueprint(login_bp)  # login_bp already has /api prefix
+app.register_blueprint(register_bp)  # register_bp already has /api prefix
+app.register_blueprint(captcha_bp, url_prefix="/api")  # Add /api prefix to captcha routes
 app.register_blueprint(admin_bp)
 app.register_blueprint(about_bp, url_prefix="/api")
 app.register_blueprint(files_bp)  # files_bp already has /api prefix
