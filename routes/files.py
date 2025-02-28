@@ -81,12 +81,13 @@ def upload_file():
         api_instance = cloudmersive_virus_api_client.ScanApi(cloudmersive_virus_api_client.ApiClient(configuration))
         input_file = file_path # file | Input file to perform the operation on.
         file.save(file_path)
-        print(input_file)
 
         try:
             # Scan a file for viruses
             api_response = api_instance.scan_file(input_file)
             pprint(api_response)
+            if api_response['clean_response'] != True:
+                delete_file(input_file.id)
         except ApiException as e:
             print("Exception when calling ScanApi->scan_file: %s\n" % e)
 
