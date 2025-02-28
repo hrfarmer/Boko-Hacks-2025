@@ -11,11 +11,18 @@ interface User {
   username: string;
 }
 
+interface LoginResponse {
+  status: string;
+  duo_url?: string;
+  user?: User;
+  message?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (formData: FormData) => Promise<void>;
+  login: (formData: FormData) => Promise<LoginResponse>;
   logout: () => Promise<void>;
 }
 
@@ -80,7 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [isLoading, user, retryCount]);
 
-  const login = async (formData: FormData) => {
+  const login = async (formData: FormData): Promise<LoginResponse> => {
     const response = await fetch("http://localhost:5000/api/login", {
       method: "POST",
       body: formData,
@@ -93,12 +100,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const data = await response.json();
 
-    if (data.status === "success") {
+    if (data.status === "success" && data.user) {
       setUser(data.user);
       setRetryCount(0); // Reset retry count on successful login
-    } else {
-      throw new Error(data.message || "Login failed");
     }
+
+    return data;
   };
 
   const logout = async () => {

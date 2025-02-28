@@ -19,8 +19,16 @@ export default function LoginPage() {
     const formData = new FormData(evt.currentTarget as HTMLFormElement);
 
     try {
-      await login(formData);
-      navigate("/");
+      const response = await login(formData);
+
+      // Check if we need to redirect to Duo
+      if (response.duo_url) {
+        // Redirect to Duo authentication
+        window.location.href = response.duo_url;
+      } else {
+        // Normal login success, redirect to home
+        navigate("/");
+      }
     } catch (error) {
       console.error("Error:", error);
       setError(

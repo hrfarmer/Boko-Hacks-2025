@@ -1,3 +1,5 @@
+import re
+
 from flask import (Blueprint, flash, jsonify, redirect, render_template,
                    request, session, url_for)
 
@@ -8,10 +10,29 @@ register_bp = Blueprint("register", __name__, url_prefix="/api")
 
 @register_bp.route("/register", methods=["POST"])
 def register():
-    username = request.form.get("username")
-    password = request.form.get("password")
-    captcha_response = request.form.get("captcha")
-    stored_captcha = session.get("captcha_text")
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
+        confirm_password = request.form.get("confirm_password")
+
+        if password != confirm_password:
+            flash("Passwords do not match!", "error")
+            return redirect(url_for("register.register"))
+        
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long.", "error")
+            return redirect(url_for("register.register"))
+        
+        if not re.search(r"\d", password):
+            flash("Password must contain at least one digit.", "error")
+            return redirect(url_for("register.register"))
+        
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            flash("Password must contain at least one special character.", "error")
+            return redirect(url_for("register.register"))
+
+        captcha_response = request.form.get("captcha")
+        stored_captcha = session.get("captcha_text")
 
     if not stored_captcha or captcha_response.upper() != stored_captcha:
         return jsonify({

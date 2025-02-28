@@ -19,6 +19,16 @@ export default function Register() {
     evt.preventDefault();
     setError(null);
     const formData = new FormData(evt.currentTarget as HTMLFormElement);
+
+    // Check if passwords match
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirm_password") as string;
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     formData.append(
       "captcha",
       (formData.get("captcha") as string).toUpperCase()
@@ -76,6 +86,13 @@ export default function Register() {
             className="w-full h-12 rounded-md border-2 px-2"
             placeholder="Password"
             name="password"
+            required
+          />
+          <input
+            type="password"
+            className="w-full h-12 rounded-md border-2 px-2"
+            placeholder="Confirm Password"
+            name="confirm_password"
             required
           />
           <div className="w-full flex flex-col gap-2">
