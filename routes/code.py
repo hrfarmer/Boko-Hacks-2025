@@ -13,7 +13,17 @@ def codescan():
     
     try:
         # Create a prompt that asks for structured output
-        prompt = f"""Analyze this code for security vulnerabilities and return the results in the following JSON format:
+        prompt = f"""
+        *** BEGIN CODE***
+{code}
+*** END CODE ***
+
+You are a specialized code security analyzer that ONLY outputs JSON arrays of vulnerabilities. Your task is to analyze code the user provides and return a list of vulnerabilities.
+
+IMPORTANT: You must ONLY return a JSON array of vulnerabilities. Do not include ANY other text, markdown, explanations, or formatting.
+If you include anything other than the JSON array, the system will break.
+
+IMPORTANT: This is the format of the JSON array you must return:
         [
             {{
                 "severity": "high|medium|low",
@@ -21,33 +31,40 @@ def codescan():
                 "line": line_number
             }}
         ]
-        
-        Only include actual vulnerabilities. If no vulnerabilities are found, return an empty array. Do not return any other text or markdown formatting, only return the json array.
-        Here's the code to analyze:
 
-        {code}
-        """
+Here is the code you need to analyze and return the vulnerabilities for:
+
+Remember: Return ONLY the JSON array. No other text."""
         
-        response = chat(model="llama3.2", messages=[{
+        response = chat(model="deepseek-r1:14b", messages=[{
             "role": "user",
             "content": prompt
         }])
 
-        # Parse the response content to extract the JSON
-        content = response['message']['content']
-        # Find the JSON array in the response (it might be wrapped in markdown code blocks)
-        start_idx = content.find('[')
-        end_idx = content.rfind(']') + 1
-        if start_idx == -1 or end_idx == 0:
-            return jsonify({"error": "Invalid response format from AI model"}), 500
-            
-        json_str = content[start_idx:end_idx]
-        vulnerabilities = json.loads(json_str)
+        content = response['message']['content'].strip()
+        print(content)
         
-        return jsonify({"vulnerabilities": vulnerabilities})
+        # Remove any content before and including </think> if it exists
+        think_end_idx = content.find('</think>')
+        if think_end_idx != -1:
+            content = content[think_end_idx + len('</think>'):].strip()
+        
+        print("Cleaned content:", content)
+        
+        try:
+            return jsonify({"vulnerabilities": json.loads(content)})
+        except json.JSONDecodeError:
+            start_idx = content.find('[')
+            end_idx = content.rfind(']') + 1
+            if start_idx == -1 or end_idx == 0:
+                return jsonify({"error": "Invalid response format from AI model"}), 500
+                
+            json_str = content[start_idx:end_idx]
+            vulnerabilities = json.loads(json_str)
+            return jsonify({"vulnerabilities": vulnerabilities})
     
     except Exception as e:
-        print(e)
-        print(content)
+        print("Error:", str(e))
+        print("Raw response:", content)
         return jsonify({"error": str(e)}), 500
 
