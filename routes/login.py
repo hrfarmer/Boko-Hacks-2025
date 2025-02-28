@@ -2,14 +2,20 @@ from flask import Blueprint, render_template, request, flash, redirect, session,
 from models.user import User
 from extensions import db
 import duo_universal
+import os
+import dotenv
+
+
+dotenv.load_dotenv()
+
 
 login_bp = Blueprint("login", __name__)
 
 
 try:
-    client_id = "DIXMG6WOX6PVM0ACQ5SK"
-    client_secret="UnHVYccJdNhkHUVbBUz6kd2HcHH0n2wq9O0BHEIV"
-    api_hostname="api-c31233b9.duosecurity.com"
+    client_id = os.getenv('CLIENT_ID')
+    client_secret=os.getenv('CLIENT_SECRET')
+    api_hostname=os.getenv('API_HOSTNAME')
     redirect_uri = "http://localhost:5000/duo-callback"
                 
                 
@@ -42,6 +48,8 @@ def login():
             return redirect(url_for("hub.hub"))
         else:
             flash("Invalid username or password.", "error")
+        
+    
     print("dfdfsdfsfdsfd")
     return render_template("login.html")
 
@@ -62,10 +70,12 @@ def duo_callback():
     code = request.args.get('duo_code')
 
     if 'state' in session and 'user' in session:
+        print('here')
         saved_state = session['state']
         username = session['user']
         
     else:
+        print('down here')
         # For flask, if url used to get to login.html is not localhost,
         # (ex: 127.0.0.1) then the sessions will be different
         # and the localhost session does not have the state
