@@ -69,7 +69,6 @@ def upload_file():
         try:
             # Scan a file for viruses
             api_response = api_instance.scan_file(input_file)
-            pprint(api_response.clean_result)
 
             if api_response.clean_result != True:
                 new_file = File(
@@ -77,7 +76,8 @@ def upload_file():
                 file_path=file_path,
                 user_id=current_user.id
                 )
-                delete_file(input_file.id)
+                delete_file(new_file.id)
+                return jsonify({'success': False}), 500
         except ApiException as e:
             print("Exception when calling ScanApi->scan_file: %s\n" % e)
 
