@@ -4,9 +4,9 @@ import { BrowserRouter, Route, Routes } from "react-router";
 import Navbar from "./components/Navbar";
 import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
-import AdminPortal from "./routes/Admin";
 import Home from "./routes/Home";
 import LoginPage from "./routes/Login";
+import AdminPortal from "./routes/apps/AdminPortal";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

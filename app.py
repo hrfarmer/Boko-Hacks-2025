@@ -66,7 +66,7 @@ db.init_app(app)
 
 # Register blueprints with /api prefix
 app.register_blueprint(login_bp)  # login_bp already has /api prefix
-app.register_blueprint(admin_bp, url_prefix="/api")
+app.register_blueprint(admin_bp)
 app.register_blueprint(about_bp, url_prefix="/api")
 app.register_blueprint(files_bp)  # files_bp already has /api prefix
 app.register_blueprint(news_bp)   # news_bp already has /api prefix
