@@ -77,7 +77,7 @@ def upload_file():
                 user_id=current_user.id
                 )
                 delete_file(new_file.id)
-                return jsonify({'success': False}), 500
+                return jsonify({'success': False, 'message': "Malicious file detected!"}), 500
         except ApiException as e:
             print("Exception when calling ScanApi->scan_file: %s\n" % e)
 
