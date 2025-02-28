@@ -42,10 +42,75 @@ def upload_file():
     """Handle file upload"""
     if 'file' not in request.files:
         return jsonify({'success': False, 'error': 'No file part'}), 400
+    
+    file=request.files['file']
+    
+    if file:  
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        print(f"File path: {file_path}")
+
+        import time
+        import cloudmersive_virus_api_client
+        from cloudmersive_virus_api_client.rest import ApiException
+        from pprint import pprint
+
+        # Configure API key authorization: Apikey
+        configuration = cloudmersive_virus_api_client.Configuration()
+        configuration.api_key['Apikey'] = os.getenv('CLOUDMERSIVE_KEY')
+        # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+        # configuration.api_key_prefix['Apikey'] = 'Bearer'
+
+        # create an instance of the API class
+        api_instance = cloudmersive_virus_api_client.ScanApi(cloudmersive_virus_api_client.ApiClient(configuration))
+        input_file = file_path # file | Input file to perform the operation on.
+        file.save(file_path)
+
+        try:
+            # Scan a file for viruses
+            api_response = api_instance.scan_file(input_file)
+
+            if api_response.clean_result != True:
+                new_file = File(
+                filename=filename,
+                file_path=file_path,
+                user_id=current_user.id
+                )
+                delete_file(new_file.id)
+                return jsonify({'success': False, 'message': "Malicious file detected!"}), 500
+        except ApiException as e:
+            print("Exception when calling ScanApi->scan_file: %s\n" % e)
+
+        try:
+            file.save(file_path)
+            print(f"File saved successfully at {file_path}")
+
+            new_file = File(
+                filename=filename,
+                file_path=file_path,
+                user_id=current_user.id
+            )
+
+            db.session.add(new_file)
+            db.session.commit()
+            print(f"File record saved to database with ID: {new_file.id}")
+
+            return jsonify({
+                'success': True,
+                'message': 'File uploaded successfully!',
+                'file': new_file.to_dict()
+            })
+        except Exception as e:
+            print(f"Error saving file: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return jsonify({'success': False, 'error': str(e)}), 500
+    else:
+        print("File type not allowed or no file uploaded")
         
     file = request.files['file']
-    if not file or not file.filename:
-        return jsonify({'success': False, 'error': 'No file selected'}), 400
+    #if not file or not file.filename:
+    #    return jsonify({'success': False, 'error': 'No file selected'}), 400
     
     if not allowed_file(file.filename):
         return jsonify({'success': False, 'error': 'File type not allowed'}), 400

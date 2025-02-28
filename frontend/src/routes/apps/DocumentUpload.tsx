@@ -39,6 +39,7 @@ export default function DocumentUpload() {
 
   const handleUpload = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     const formData = new FormData(event.currentTarget);
     const fileInput = event.currentTarget.querySelector(
       'input[type="file"]'
@@ -69,9 +70,16 @@ export default function DocumentUpload() {
       if (data.success) {
         showMessage("success", "File uploaded successfully!");
         fetchFiles();
-        event.currentTarget.reset();
       } else {
-        showMessage("error", data.error || "Upload failed");
+
+        if (data.message == "Malicious file detected!"){
+          showMessage("error", data.error || "Upload failed! Malicious file detected!");
+        }
+        else{
+          showMessage("error", data.error || "Upload failed");
+        }
+
+        
       }
     } catch (error) {
       console.error("Error uploading file:", error);
