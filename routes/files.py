@@ -65,7 +65,31 @@ def upload_file():
         filename = secure_filename(file.filename)
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         print(f"File path: {file_path}")
-        
+
+        import time
+        import cloudmersive_virus_api_client
+        from cloudmersive_virus_api_client.rest import ApiException
+        from pprint import pprint
+
+        # Configure API key authorization: Apikey
+        configuration = cloudmersive_virus_api_client.Configuration()
+        configuration.api_key['Apikey'] = os.getenv('CLOUDMERSIVE_KEY')
+        # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+        # configuration.api_key_prefix['Apikey'] = 'Bearer'
+
+        # create an instance of the API class
+        api_instance = cloudmersive_virus_api_client.ScanApi(cloudmersive_virus_api_client.ApiClient(configuration))
+        input_file = file_path # file | Input file to perform the operation on.
+        file.save(file_path)
+        print(input_file)
+
+        try:
+            # Scan a file for viruses
+            api_response = api_instance.scan_file(input_file)
+            pprint(api_response)
+        except ApiException as e:
+            print("Exception when calling ScanApi->scan_file: %s\n" % e)
+
         try:
             file.save(file_path)
             print(f"File saved successfully at {file_path}")
@@ -75,6 +99,7 @@ def upload_file():
                 file_path=file_path,
                 user_id=current_user.id
             )
+
             db.session.add(new_file)
             db.session.commit()
             print(f"File record saved to database with ID: {new_file.id}")
