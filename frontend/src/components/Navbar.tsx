@@ -1,4 +1,4 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
 import { useAuth } from "../context/AuthContext";
 
 export const PAGES: { name: string; href: string }[] = [
@@ -8,7 +8,6 @@ export const PAGES: { name: string; href: string }[] = [
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {

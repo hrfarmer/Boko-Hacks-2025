@@ -11,6 +11,7 @@ from extensions import db
 from models.user import User
 from routes.about import about_bp
 from routes.admin import admin_bp, init_admin_db
+from routes.files import files_bp
 from routes.login import login_bp
 
 dotenv.load_dotenv()
@@ -57,6 +58,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 db.init_app(app)
 
@@ -64,6 +66,7 @@ db.init_app(app)
 app.register_blueprint(login_bp)  # login_bp already has /api prefix
 app.register_blueprint(admin_bp, url_prefix="/api")
 app.register_blueprint(about_bp, url_prefix="/api")
+app.register_blueprint(files_bp)  # files_bp already has /api prefix
 
 
 @app.route("/", defaults={"path": ""})
