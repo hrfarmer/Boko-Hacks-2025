@@ -13,6 +13,8 @@ from routes.about import about_bp
 from routes.admin import admin_bp, init_admin_db
 from routes.files import files_bp
 from routes.login import login_bp
+from routes.news import news_bp
+from routes.notes import notes_bp
 
 dotenv.load_dotenv()
 app = Flask(__name__, template_folder="frontend/dist", static_folder="frontend/dist")
@@ -67,6 +69,8 @@ app.register_blueprint(login_bp)  # login_bp already has /api prefix
 app.register_blueprint(admin_bp, url_prefix="/api")
 app.register_blueprint(about_bp, url_prefix="/api")
 app.register_blueprint(files_bp)  # files_bp already has /api prefix
+app.register_blueprint(news_bp)   # news_bp already has /api prefix
+app.register_blueprint(notes_bp)  # notes_bp already has /api prefix
 
 
 @app.route("/", defaults={"path": ""})
