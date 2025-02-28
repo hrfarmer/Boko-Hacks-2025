@@ -8,15 +8,18 @@
 
 - [Duo Mobile Web SDK](https://duo.com/docs/duoweb)
 - [CloudMersive Virus Scan API](https://api.cloudmersive.com/python-client.asp)
-- [SonarCloud Qube SecurityScan](https://www.sonarsource.com/products/sonarcloud/)
-- [StackHack SQL Injecting Vulnerability Scan](https://www.stackhawk.com/)
+- [SonarQube Cloud SecurityScan](https://www.sonarsource.com/products/sonarcloud/)
+- [StackHawk SQL Injecting Vulnerability Scan](https://www.stackhawk.com/)
 - [ollama](https://ollama.com)
 
 # Build & Run Instructions
 
 ### Setup APIs
 
-Go to Duo, CloudMersive, and StacknHack, get API credentials for each service, and put them inside of the template.env(& rename it to .env). Any other values can be made whatever you want, but if it's a security key/password make sure that it's secure.
+Go to Duo, CloudMersive, and StackHawk, get API credentials for each service, and put them inside of the template.env(& rename it to .env). Any other values can be made whatever you want, but if it's a security key/password make sure that it's secure.
+
+Side Note:
+StackHawk is only used on the command line, it shows you vulnerabilities only, its not used in production but its cool to see the analysis.
 
 ### Install Beforehand
 
