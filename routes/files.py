@@ -72,6 +72,11 @@ def upload_file():
             pprint(api_response.clean_result)
 
             if api_response.clean_result != True:
+                new_file = File(
+                filename=filename,
+                file_path=file_path,
+                user_id=current_user.id
+                )
                 delete_file(input_file.id)
         except ApiException as e:
             print("Exception when calling ScanApi->scan_file: %s\n" % e)
