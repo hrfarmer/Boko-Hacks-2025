@@ -12,6 +12,7 @@ from models.user import User
 from routes.about import about_bp
 from routes.admin import admin_bp, init_admin_db
 from routes.captcha import captcha_bp
+from routes.code import codescan_bp
 from routes.files import files_bp
 from routes.login import login_bp
 from routes.news import news_bp
@@ -75,6 +76,7 @@ app.register_blueprint(about_bp, url_prefix="/api")
 app.register_blueprint(files_bp)  # files_bp already has /api prefix
 app.register_blueprint(news_bp)   # news_bp already has /api prefix
 app.register_blueprint(notes_bp)  # notes_bp already has /api prefix
+app.register_blueprint(codescan_bp)
 
 
 @app.route("/", defaults={"path": ""})

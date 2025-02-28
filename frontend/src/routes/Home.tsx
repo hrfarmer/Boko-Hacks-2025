@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate } from "react-router";
 import { useAuth } from "../context/AuthContext";
+import CodeScanner from "./apps/CodeScanner";
 import DocumentCard from "./apps/DocumentUpload";
 import NewsCard from "./apps/News";
 import NotesCard from "./apps/Notes";
@@ -22,6 +23,12 @@ const CARDS: CardData[] = [
     description:
       "Upload and store your PDF files for easy sharing with teammates.",
     component: DocumentCard,
+  },
+  {
+    title: "Code Scanner",
+    description:
+      "Scan your code for potential security vulnerabilities and ethical hacking issues.",
+    component: CodeScanner,
   },
 ];
 
